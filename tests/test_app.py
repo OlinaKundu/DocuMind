@@ -26,6 +26,7 @@ from src.chunker import TextChunk
 from src.embeddings import ChunkEmbeddings
 from src.retriever import RetrievalError, SearchResult, VectorStore
 from src.rag_pipeline import RAGResponse
+from src.conversation import ConversationalRAGResponse
 from src.answer_validator import ValidationReport
 from src.llm import (
     LLMAPIError,
@@ -331,6 +332,62 @@ def test_render_assistant_response_no_sources_refusal(
     assert "No Retrieved Evidence" in mock_info.call_args[0][0]
 
 
+@patch("streamlit.expander")
+@patch("streamlit.markdown")
+def test_render_assistant_response_with_rewritten_query(
+    mock_markdown, mock_expander
+):
+    """When a question was reformulated, query rewriting details are rendered."""
+    src = SearchResult(
+        chunk=TextChunk(text="Source text", page_number=2, chunk_id="c1", start_char=0, end_char=11),
+        score=0.85,
+        index=0,
+    )
+    rag_resp = RAGResponse(
+        answer="The learning rate was 0.001 [Page 2].",
+        sources=[src],
+        model="openai/gpt-oss-120b",
+        question="What was the learning rate?",
+    )
+    conv_resp = ConversationalRAGResponse(
+        original_question="What was it?",
+        standalone_question="What was the learning rate?",
+        rag_response=rag_resp,
+        warning=None,
+    )
+
+    render_assistant_response(rag_resp.answer, response=rag_resp, validation=None, conv_response=conv_resp)
+
+    # Check expander was opened for query rewriting
+    mock_expander.assert_any_call("🔍 Query Rewriting (Conversational Context)", expanded=False)
+    mock_markdown.assert_any_call("**Original Question:** What was it?")
+    mock_markdown.assert_any_call("**Standalone Retrieval Query:** What was the learning rate?")
+
+
+@patch("streamlit.warning")
+@patch("streamlit.markdown")
+def test_render_assistant_response_with_fallback_warning(
+    mock_markdown, mock_warning
+):
+    """When conversational contextualization produces a warning, it is rendered in UI."""
+    rag_resp = RAGResponse(
+        answer="Fallback answer.",
+        sources=[],
+        model="openai/gpt-oss-120b",
+        question="What was it?",
+    )
+    conv_resp = ConversationalRAGResponse(
+        original_question="What was it?",
+        standalone_question="What was it?",
+        rag_response=rag_resp,
+        warning="Rate limit reached during contextualization; fell back to original query.",
+    )
+
+    render_assistant_response(rag_resp.answer, response=rag_resp, validation=None, conv_response=conv_resp)
+
+    mock_warning.assert_any_call("⚠️ Rate limit reached during contextualization; fell back to original query.")
+
+
 # ---------------------------------------------------------------------------
 # 5. Streamlit AppTest Integration Tests
 # ---------------------------------------------------------------------------
@@ -409,7 +466,7 @@ def test_apptest_with_mocked_document_session():
 
 
 @patch("src.answer_validator.validate_answer")
-@patch("src.rag_pipeline.answer_question")
+@patch("src.conversation.answer_with_history")
 def test_apptest_chat_input_flow(mock_answer, mock_validate):
     """Simulates user submitting a prompt via chat_input and receiving a validated response."""
     src = SearchResult(
@@ -423,6 +480,12 @@ def test_apptest_chat_input_flow(mock_answer, mock_validate):
         model="openai/gpt-oss-120b",
         question="Which optimizer?",
     )
+    mock_conv_response = ConversationalRAGResponse(
+        original_question="Which optimizer?",
+        standalone_question="Which optimizer was used?",
+        rag_response=mock_rag_response,
+        warning=None,
+    )
     mock_validation = ValidationReport(
         is_valid=True,
         cited_pages=[3],
@@ -431,7 +494,7 @@ def test_apptest_chat_input_flow(mock_answer, mock_validate):
         uncited_sentence_count=0,
         warnings=[],
     )
-    mock_answer.return_value = mock_rag_response
+    mock_answer.return_value = mock_conv_response
     mock_validate.return_value = mock_validation
 
     at = AppTest.from_file(APP_PATH)
@@ -455,6 +518,9 @@ def test_apptest_chat_input_flow(mock_answer, mock_validate):
 
     assert not at.exception
     mock_answer.assert_called_once()
+    # Verify that conversation history was passed to the conversational pipeline
+    call_kwargs = mock_answer.call_args[1]
+    assert "conversation_history" in call_kwargs
     mock_validate.assert_called_once()
 
     # Session state should now contain user and assistant messages
@@ -466,7 +532,7 @@ def test_apptest_chat_input_flow(mock_answer, mock_validate):
     assert messages[1]["content"] == "The optimizer used was AdamW. [Page 3]"
 
 
-@patch("src.rag_pipeline.answer_question")
+@patch("src.conversation.answer_with_history")
 def test_apptest_chat_auth_error_handling(mock_answer):
     """Authentication errors from Groq must be captured and displayed without crashing."""
     mock_answer.side_effect = LLMAuthenticationError("Invalid Groq API key")
@@ -495,7 +561,7 @@ def test_apptest_chat_auth_error_handling(mock_answer):
     assert "Authentication Error" in at.error[0].value
 
 
-@patch("src.rag_pipeline.answer_question")
+@patch("src.conversation.answer_with_history")
 def test_apptest_chat_rate_limit_error_handling(mock_answer):
     """Rate limit errors from Groq must be caught and rendered clearly."""
     mock_answer.side_effect = LLMRateLimitError("Rate limit reached. Please wait.")
@@ -523,7 +589,7 @@ def test_apptest_chat_rate_limit_error_handling(mock_answer):
     assert "Rate Limit Exceeded" in at.error[0].value
 
 
-@patch("src.rag_pipeline.answer_question")
+@patch("src.conversation.answer_with_history")
 def test_apptest_chat_empty_response_error_handling(mock_answer):
     """Empty response errors from LLM must be rendered without crashing."""
     mock_answer.side_effect = LLMEmptyResponseError("The model returned an empty completion.")
@@ -551,7 +617,7 @@ def test_apptest_chat_empty_response_error_handling(mock_answer):
     assert "Empty Response" in at.error[0].value
 
 
-@patch("src.rag_pipeline.answer_question")
+@patch("src.conversation.answer_with_history")
 def test_apptest_chat_network_api_error_handling(mock_answer):
     """Network and API errors from Groq must be rendered clearly."""
     mock_answer.side_effect = LLMAPIError("Connection timeout while contacting Groq.")
@@ -579,7 +645,7 @@ def test_apptest_chat_network_api_error_handling(mock_answer):
     assert "Groq API / Network Error" in at.error[0].value
 
 
-@patch("src.rag_pipeline.answer_question")
+@patch("src.conversation.answer_with_history")
 def test_apptest_chat_retrieval_error_handling(mock_answer):
     """Retrieval errors from FAISS must be captured and displayed."""
     mock_answer.side_effect = RetrievalError("FAISS index corrupted or unavailable.")

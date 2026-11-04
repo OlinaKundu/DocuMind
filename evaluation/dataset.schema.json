@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DocuMindRetrievalEvaluationDataset",
+  "description": "JSON schema for DocuMind IR evaluation queries and ground-truth chunk relevance annotations.",
+  "type": "object",
+  "required": ["queries"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "URI of this schema"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "is_placeholder_dataset": {
+          "type": "boolean",
+          "description": "Flag indicating if the dataset contains template/placeholder labels rather than verified ground-truth."
+        }
+      }
+    },
+    "queries": {
+      "type": "array",
+      "description": "List of evaluation queries with ground-truth relevant chunk IDs.",
+      "items": {
+        "type": "object",
+        "required": ["question", "relevant_chunk_ids"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique query identifier (e.g. 'q1', 'q2')."
+          },
+          "question": {
+            "type": "string",
+            "description": "The exact user question to evaluate."
+          },
+          "relevant_chunk_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of chunk IDs that contain relevant evidence answering the question."
+          },
+          "reference_answer": {
+            "type": "string",
+            "description": "Authoritative human-written reference answer for evaluating answer quality and correctness."
+          },
+          "document_id": {
+            "type": "string",
+            "description": "Optional document name or identifier where chunks originate."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Optional rationale explaining why the designated chunks are relevant."
+          }
+        }
+      }
+    }
+  }
+}
+

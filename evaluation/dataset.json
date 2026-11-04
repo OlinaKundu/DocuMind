@@ -1,0 +1,61 @@
+{
+  "$schema": "./dataset.schema.json",
+  "metadata": {
+    "name": "DocuMind Retrieval Evaluation Benchmark",
+    "description": "Benchmark queries and ground-truth chunk relevance labels for evaluating DocuMind retrieval quality (Precision@K, Recall@K, MRR). NOTE: Entries in this template dataset contain placeholder chunk IDs. Real authoritative evaluation requires indexing a target PDF document and annotating ground-truth relevant chunk IDs from that document.",
+    "version": "1.0.0",
+    "is_placeholder_dataset": true
+  },
+  "queries": [
+    {
+      "id": "q1",
+      "question": "What optimizer and learning rate were used for training the model?",
+      "document_id": "paper_sample.pdf",
+      "relevant_chunk_ids": [
+        "doc1_p4_c0"
+      ],
+      "reference_answer": "Model training was conducted using the SGD optimizer (Stochastic Gradient Descent) with an initial learning rate of 0.01, momentum of 0.9, and a cosine annealing schedule across 100 epochs.",
+      "notes": "Placeholder: Expected chunks discussing training hyperparameters, learning rate, and optimizer settings (e.g., SGD/Adam) on page 4."
+    },
+    {
+      "id": "q2",
+      "question": "What is the primary architectural difference between Model A and Model B?",
+      "document_id": "paper_sample.pdf",
+      "relevant_chunk_ids": [
+        "doc1_p2_c0"
+      ],
+      "reference_answer": "Model A utilizes standard dense self-attention, whereas Model B adopts linear causal attention with flash-attention kernel dispatch, providing sub-quadratic memory scaling.",
+      "notes": "Placeholder: Expected chunks describing model architecture and multi-head attention comparisons on page 2."
+    },
+    {
+      "id": "q3",
+      "question": "What baseline datasets were used to evaluate benchmark accuracy?",
+      "document_id": "paper_sample.pdf",
+      "relevant_chunk_ids": [
+        "doc1_p6_c0"
+      ],
+      "reference_answer": "The authors evaluated benchmark accuracy on GLUE, SuperGLUE, and SQuAD 2.0 question answering datasets.",
+      "notes": "Placeholder: Expected chunks covering experimental setup and evaluation datasets on page 6."
+    },
+    {
+      "id": "q4",
+      "question": "What hardware specifications and GPU cluster were used for the experiment?",
+      "document_id": "paper_sample.pdf",
+      "relevant_chunk_ids": [
+        "doc1_p5_c0"
+      ],
+      "reference_answer": "All experimental evaluations were executed on a distributed cluster of 8 NVIDIA A100 Tensor Core GPUs with 80GB VRAM each, interconnected via 400 Gbps InfiniBand.",
+      "notes": "Placeholder: Expected chunks listing compute resources, GPU accelerators, and memory requirements on page 5."
+    },
+    {
+      "id": "q5",
+      "question": "What limitations and future directions did the authors outline?",
+      "document_id": "paper_sample.pdf",
+      "relevant_chunk_ids": [
+        "doc1_p8_c0"
+      ],
+      "reference_answer": "Key limitations include reliance on digital text extraction without OCR for scanned pages, with future directions focusing on exploring multi-vector ColBERT indexing.",
+      "notes": "Placeholder: Expected chunks in conclusion/discussion section discussing scope limits and future work on page 8."
+    }
+  ]
+}

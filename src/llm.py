@@ -99,6 +99,7 @@ def generate_chat_response(
     client: Optional[Any] = None,
     temperature: float = 0.0,
     max_tokens: Optional[int] = None,
+    response_format: Optional[dict[str, str]] = None,
 ) -> str:
     """Sends a sequence of chat messages to the configured Groq model and returns the generated text.
 
@@ -171,6 +172,8 @@ def generate_chat_response(
         }
         if max_tokens is not None:
             params["max_tokens"] = max_tokens
+        if response_format is not None:
+            params["response_format"] = response_format
 
         chat_completion = active_client.chat.completions.create(**params)
 
