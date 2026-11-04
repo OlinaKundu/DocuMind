@@ -1,0 +1,33 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Byte-code / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Testing and coverage caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Streamlit config / runtime cache
+.streamlit/
+
+# Secrets and local config
+.env
+*.env
+
+# Local data & uploaded documents (prevent accidental commit of personal/private documents)
+data/*
+!data/.gitkeep
+*.pdf
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
