@@ -4,9 +4,9 @@
 
 ---
 
-## 🎯 Current Status: Phase 6.1 (Conversational RAG & Follow-up Question Resolution)
+## 🎯 Current Status: Phase 6.3 (Answer Quality & Groundedness Evaluation)
 
-This repository implements a full-stack, local-first conversational RAG application:
+This repository implements a full-stack, local-first conversational RAG and evaluation system:
 - **Phase 1**: PDF Ingestion using PyMuPDF (`src/pdf_loader.py`).
 - **Phase 2**: Overlapping character-based text chunking with 1-based page metadata (`src/chunker.py`).
 - **Phase 3**: Dense vector embeddings with Sentence Transformers (`all-MiniLM-L6-v2`, 384 dimensions) (`src/embeddings.py`).
@@ -17,6 +17,8 @@ This repository implements a full-stack, local-first conversational RAG applicat
 - **Phase 5.4**: Deterministic citation extraction, validation, and answer grounding checks (`src/citation_validator.py`, `src/answer_validator.py`).
 - **Phase 5.5**: Interactive Streamlit web application with chat interface, citation verification badges, expandable evidence, and document session management (`app.py`).
 - **Phase 6.1**: Conversational context and follow-up question resolution (`src/conversation.py`).
+- **Phase 6.2**: Quantitative retrieval quality evaluation and benchmarking using Precision@K, Recall@K, and MRR (`src/evaluation.py`, `scripts/evaluate_retrieval.py`).
+- **Phase 6.3**: Answer quality and groundedness evaluation using LLM-as-a-Judge across Relevance, Faithfulness, and Correctness (`src/answer_evaluator.py`, `scripts/evaluate_answers.py`).
 
 ---
 
@@ -123,6 +125,12 @@ Provides an interactive, portfolio-grade user interface:
 - **Conversational Chat Interface**: Streamlit chat components (`st.chat_message`, `st.chat_input`) displaying the original user query and generated answer, with an optional debug accordion to inspect standalone rewritten queries.
 - **Citation Verification Badges**: Distinct visual feedback distinguishing verified citations (`st.success`), coverage warnings (`st.info`), and invalid hallucinations (`st.error`).
 - **Expandable Evidence**: Expandable accordions below each answer revealing verbatim passage text, chunk IDs, page numbers, and cosine similarity progress bars.
+
+### 9. Retrieval Quality Benchmarking (`src/evaluation.py`, `scripts/evaluate_retrieval.py`)
+Measures the dense vector search engine independently of generation using standard IR metrics: Precision@K (with fixed-K denominator), Recall@K (against distinct ground-truth chunks), Reciprocal Rank (RR), and Mean Reciprocal Rank (MRR).
+
+### 10. Answer Quality & Groundedness Evaluation (`src/answer_evaluator.py`, `scripts/evaluate_answers.py`)
+Provides an offline LLM-as-a-Judge pipeline scoring answers across Relevance, Faithfulness, and Correctness using 1–5 rubrics, XML delimiter security isolation, JSON mode, and application-side schema enforcement.
 
 ---
 
